@@ -1,0 +1,2 @@
+type	II
+pulses	40,32

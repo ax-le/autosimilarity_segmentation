@@ -1,0 +1,2 @@
+type	III
+pulses	24,16,12

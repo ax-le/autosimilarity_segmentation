@@ -1,9 +1,10 @@
  - librosa
  - madmom
+ - matplotlib
  - mir_eval
  - mirdata
  - numpy
  - pandas (for tables in the notebooks, not used otherwise).
- - sklearn
- - soundfile
+ - scikit-learn
+ - scipy
  - tensorly

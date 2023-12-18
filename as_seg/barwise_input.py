@@ -31,7 +31,47 @@ import librosa
 
 # %% Tensors barwise spectrograms construction
 # !!! Be extremely careful with the organization of modes, which can be either Frequency-Time at barscale-Bars (FTB) or Bars-Frequency-Time at barscale (BFT) depending on the method.
+def tensorize_barwise_BFT(spectrogram, bars, hop_length_seconds, subdivision):
+    """
+    Returns a 3rd order tensor-spectrogram from the original spectrogram and bars starts and ends.
+    The order of modes is Bars-Frequency-Time at barscale (BFT).
+    Must be used for SSAE and the computtion of Barwise TF matrix.
+    
+    Each bar in the tensor-spectrogram contains the same number of frames, define by the "subdivision" parameter.
+    These frames are selected from an oversampled spectrogram, adapting to the specific size of each bar.
+    See [1] for details.
+
+    Parameters
+    ----------
+    spectrogram : list of list of floats or numpy array
+        The spectrogram to return as a tensor-spectrogram.
+    bars : list of tuples
+        List of the bars (start, end), in seconds, to cut the spectrogram at bar delimitation.
+    hop_length_seconds : float
+        The hop_length, in seconds.
+    subdivision : integer
+        The number of subdivision of the bar to be contained in each slice of the tensor.
+
+    Returns
+    -------
+    np.array tensor
+        The tensor-spectrogram as a np.array.
+
+    """
+    barwise_spec = []
+    bars_idx = dm.segments_from_time_to_frame_idx(bars[1:], hop_length_seconds)
+    for idx, beats in enumerate(bars_idx):
+        t_0 = beats[0]
+        t_1 = beats[1]
+        samples = [int(round(t_0 + k * (t_1 - t_0)/subdivision)) for k in range(subdivision)]
+        if len(samples) != len(set(samples)): # Check for repetitions
+            raise err.ToDebugException("The subdivision is too large, it leads to repeated samples chosen in the bar!")
+        if samples[-1] < spectrogram.shape[1]:
+            barwise_spec.append(spectrogram[:,samples])
+    return np.array(barwise_spec)
+
 def tensorize_barwise_FTB(spectrogram, bars, hop_length_seconds, subdivision):
+    #(careful: different mode organization than previous one: here, this is Frequency-Time-Bars)
     """
     Returns a 3rd order tensor-spectrogram from the original spectrogram and bars starts and ends.
     The order of modes is Frequency-Time at barscale-Bars (FTB).
@@ -75,46 +115,6 @@ def tensorize_barwise_FTB(spectrogram, bars, hop_length_seconds, subdivision):
             break
     
     return tl.tensor(tens)#, dtype=tl.float32)
-
-def tensorize_barwise_BFT(spectrogram, bars, hop_length_seconds, subdivision):
-    #(careful: different mode organization than for NTD where it is Frequency-Time-Bars)
-    """
-    Returns a 3rd order tensor-spectrogram from the original spectrogram and bars starts and ends.
-    The order of modes is Bars-Frequency-Time at barscale (BFT).
-    Must be used for SSAE and the computtion of Barwise TF matrix.
-    
-    Each bar in the tensor-spectrogram contains the same number of frames, define by the "subdivision" parameter.
-    These frames are selected from an oversampled spectrogram, adapting to the specific size of each bar.
-    See [1] for details.
-
-    Parameters
-    ----------
-    spectrogram : list of list of floats or numpy array
-        The spectrogram to return as a tensor-spectrogram.
-    bars : list of tuples
-        List of the bars (start, end), in seconds, to cut the spectrogram at bar delimitation.
-    hop_length_seconds : float
-        The hop_length, in seconds.
-    subdivision : integer
-        The number of subdivision of the bar to be contained in each slice of the tensor.
-
-    Returns
-    -------
-    np.array tensor
-        The tensor-spectrogram as a np.array.
-
-    """
-    barwise_spec = []
-    bars_idx = dm.segments_from_time_to_frame_idx(bars[1:], hop_length_seconds)
-    for idx, beats in enumerate(bars_idx):
-        t_0 = beats[0]
-        t_1 = beats[1]
-        samples = [int(round(t_0 + k * (t_1 - t_0)/subdivision)) for k in range(subdivision)]
-        if len(samples) != len(set(samples)): # Check for repetitions
-            raise err.ToDebugException("The subdivision is too large, it leads to repeated samples chosen in the bar!")
-        if samples[-1] < spectrogram.shape[1]:
-            barwise_spec.append(spectrogram[:,samples])
-    return np.array(barwise_spec)
 
 # %% Matrix barwise spectrograms handling
 def barwise_TF_matrix(spectrogram, bars, hop_length_seconds, subdivision):

@@ -1,0 +1,2 @@
+type	II
+pulses	8,16

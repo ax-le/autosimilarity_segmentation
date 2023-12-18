@@ -13,10 +13,10 @@ import as_seg.model.errors as err
 import numpy as np
 import madmom.features.downbeats as dbt
 import madmom.features.beats as bt
-import soundfile as sf
 import mir_eval
 import scipy
 import librosa
+import math
 
 # %% Read and treat inputs
 def get_bars_from_audio(song_path):
@@ -456,7 +456,7 @@ def sonify_frontiers_path(audio_file_path, frontiers_in_seconds, output_path):
     Nothing, but writes a song at output_path
 
     """
-    the_signal, sampling_rate = sf.read(audio_file_path)
+    the_signal, sampling_rate = librosa.load(audio_file_path, sr=None)
     sonify_frontiers_song(the_signal, sampling_rate, frontiers_in_seconds, output_path)
 
 def sonify_frontiers_song(song_signal, sampling_rate, frontiers_in_seconds, output_path):
@@ -644,3 +644,64 @@ def compute_rates_of_segmentation(reference, segments_in_time, window_length = 0
     return tp, fp, fn
         
 
+# %% High level encapsulation of the computation of scores, based on segments.
+## Tolerances are MIREX standards in time (0.5s and 3s), or 0 and 1 bar when barwise aligned.
+def get_scores_from_segments_in_time(segments_in_time, ref_tab):
+    if type(ref_tab[0][0]) != np.ndarray: # ref_tab consist in the references, and should be nested in an array (for consistency).
+        ref_tab = [ref_tab]
+
+    res = -math.inf * np.ones((2, 3))
+
+    prec05, rap05, f_mes05 = compute_score_of_segmentation(ref_tab[0], segments_in_time, window_length = 0.5)
+    prec3, rap3, f_mes3 = compute_score_of_segmentation(ref_tab[0], segments_in_time, window_length = 3)
+    res = [[round(prec05,4),round(rap05,4),round(f_mes05,4)], [round(prec3,4),round(rap3,4),round(f_mes3,4)]]
+    
+    if len(ref_tab) > 1:
+        nd_prec05, nd_rap05, nd_f_mes05 = compute_score_of_segmentation(ref_tab[1], segments_in_time, window_length = 0.5)
+        nd_prec3, nd_rap3, nd_f_mes3 = compute_score_of_segmentation(ref_tab[1], segments_in_time, window_length = 3)
+        if nd_f_mes05 + nd_f_mes3 > f_mes05 + f_mes3:
+            res = [[round(nd_prec05,4),round(nd_rap05,4),round(nd_f_mes05,4)], [round(nd_prec3,4),round(nd_rap3,4),round(nd_f_mes3,4)]]
+    
+    return res
+
+def get_scores_in_time_from_barwise_segments(segments, bars, ref_tab):
+    segments_in_time = segments_from_bar_to_time(segments, bars)
+    return get_scores_from_segments_in_time(segments_in_time, ref_tab)
+    
+def get_scores_in_bars_from_barwise_segments(segments, bars, ref_tab):
+    res = -math.inf * np.ones((2, 3))
+
+    if type(ref_tab[0][0]) != np.ndarray: # ref_tab consist in the references, and should be nested in an array (for consistency between double anntoations in SALAMI and single in RWC).
+        ref_tab = [ref_tab]
+
+    ref0_in_bars = np.array(segments_from_time_to_bar(ref_tab[0], bars))
+    
+    prec0bar, rap0bar, f_mes0bar = compute_score_of_segmentation(ref0_in_bars, segments, window_length = 0)
+    prec1bar, rap1bar, f_mes1bar = compute_score_of_segmentation(ref0_in_bars, segments, window_length = 1)
+    res = [[round(prec0bar,4),round(rap0bar,4),round(f_mes0bar,4)], [round(prec1bar,4),round(rap1bar,4),round(f_mes1bar,4)]]
+
+    if len(ref_tab) > 1:
+        ref1_in_bars = np.array(segments_from_time_to_bar(ref_tab[1], bars))
+
+        nd_prec0bar, nd_rap0bar, nd_f_mes0bar = compute_score_of_segmentation(ref1_in_bars, segments, window_length = 0)
+        nd_prec1bar, nd_rap1bar, nd_f_mes1bar = compute_score_of_segmentation(ref1_in_bars, segments, window_length = 1)
+        if nd_f_mes0bar + nd_f_mes1bar > f_mes0bar + f_mes1bar:
+            res = [[round(nd_prec0bar,4),round(nd_rap0bar,4),round(nd_f_mes0bar,4)], [round(nd_prec1bar,4),round(nd_rap1bar,4),round(nd_f_mes1bar,4)]]
+    
+    return res
+                                          
+def get_scores_switch_time_alignment(time_alignment, segments, bars, ref_tab):
+    if type(ref_tab[0][0]) != np.ndarray: # ref_tab consist in the references, and should be nested in an array (for consistency).
+        ref_tab = [ref_tab]
+
+    # Tolerance in absolute time
+    if time_alignment in ["s", "second", "seconds"]:
+        return get_scores_in_time_from_barwise_segments(segments, bars, ref_tab)
+
+    # Tolerance barwise aligned
+    elif time_alignment in ["b", "bars", "bar", "barwise"]:
+        return get_scores_in_bars_from_barwise_segments(segments, bars, ref_tab)
+            
+    else:
+        raise NotImplementedError(f"Time alignment parameter {time_alignment} not understood")
+    

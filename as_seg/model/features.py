@@ -19,7 +19,6 @@ import librosa.core
 import librosa.feature
 import librosa.effects
 from math import inf
-import soundfile as sf
 import as_seg.model.errors as err
 import IPython.display as ipd
 
@@ -89,13 +88,13 @@ def get_spectrogram(signal, sr, feature, hop_length, n_fft = 2048, fmin = 98, n_
     """
     if feature.lower() == "stft":
         if len(signal.shape) == 1:
-            stft = librosa.core.stft(np.asfortranarray(signal), n_fft=n_fft, hop_length = hop_length)
+            stft = librosa.core.stft(y=np.asfortranarray(signal), n_fft=n_fft, hop_length = hop_length)
             power_spectrogram = np.abs(stft) ** 2
             return power_spectrogram
         
-        power_spectrogram = np.abs(librosa.core.stft(np.asfortranarray(signal[:,0]), n_fft=n_fft, hop_length = hop_length))**2
+        power_spectrogram = np.abs(librosa.core.stft(y=np.asfortranarray(signal[:,0]), n_fft=n_fft, hop_length = hop_length))**2
         for i in range(1,signal.shape[1]):
-            power_spectrogram += np.abs(librosa.core.stft(np.asfortranarray(signal[:,i]), n_fft=n_fft, hop_length = hop_length))**2
+            power_spectrogram += np.abs(librosa.core.stft(y=np.asfortranarray(signal[:,i]), n_fft=n_fft, hop_length = hop_length))**2
         return power_spectrogram
     
     elif feature.lower() == "pcp_stft":
@@ -131,30 +130,30 @@ def get_spectrogram(signal, sr, feature, hop_length, n_fft = 2048, fmin = 98, n_
         return pcp
     elif feature.lower() == "cqt":
         if len(signal.shape) == 1:
-            constant_q_transf = librosa.core.cqt(np.asfortranarray(signal), sr = sr, hop_length = hop_length)
+            constant_q_transf = librosa.core.cqt(y=np.asfortranarray(signal), sr = sr, hop_length = hop_length)
             power_cqt = np.abs(constant_q_transf) ** 2
             return power_cqt
-        power_cqt = np.abs(librosa.core.cqt(np.asfortranarray(signal[:,0]), sr = sr, hop_length = hop_length)) ** 2
+        power_cqt = np.abs(librosa.core.cqt(y=np.asfortranarray(signal[:,0]), sr = sr, hop_length = hop_length)) ** 2
         for i in range(1,signal.shape[1]):
-            power_cqt += np.abs(librosa.core.cqt(np.asfortranarray(signal[:,i]), sr = sr, hop_length = hop_length)) ** 2
+            power_cqt += np.abs(librosa.core.cqt(y=np.asfortranarray(signal[:,i]), sr = sr, hop_length = hop_length)) ** 2
         return power_cqt
     elif feature.lower() == "log_cqt":
         if len(signal.shape) == 1:
-            constant_q_transf = librosa.core.cqt(np.asfortranarray(signal), sr = sr, hop_length = hop_length)
+            constant_q_transf = librosa.core.cqt(y=np.asfortranarray(signal), sr = sr, hop_length = hop_length)
             power_cqt = np.abs(constant_q_transf) ** 2
-            log_cqt = ((1.0/80.0) * librosa.core.amplitude_to_db(np.abs(np.array(power_cqt)), ref=np.max)) + 1.0
+            log_cqt = ((1.0/80.0) * librosa.core.amplitude_to_db(y=np.abs(np.array(power_cqt)), ref=np.max)) + 1.0
             return log_cqt
-        power_cqt = np.abs(librosa.core.cqt(np.asfortranarray(signal[:,0]), sr = sr, hop_length = hop_length)) ** 2
+        power_cqt = np.abs(librosa.core.cqt(y=np.asfortranarray(signal[:,0]), sr = sr, hop_length = hop_length)) ** 2
         for i in range(1,signal.shape[1]):
-            power_cqt += np.abs(librosa.core.cqt(np.asfortranarray(signal[:,i]), sr = sr, hop_length = hop_length)) ** 2
-        log_cqt = ((1.0/80.0) * librosa.core.amplitude_to_db(np.abs(np.array(power_cqt)), ref=np.max)) + 1.0
+            power_cqt += np.abs(librosa.core.cqt(y=np.asfortranarray(signal[:,i]), sr = sr, hop_length = hop_length)) ** 2
+        log_cqt = ((1.0/80.0) * librosa.core.amplitude_to_db(y=np.abs(np.array(power_cqt)), ref=np.max)) + 1.0
         return log_cqt
     elif feature.lower() == "tonnetz":
         if len(signal.shape) == 1:
-            return librosa.feature.tonnetz(np.asfortranarray(signal), sr = sr)
-        tonnetz = librosa.feature.tonnetz(np.asfortranarray(signal[:,0]), sr = sr)
+            return librosa.feature.tonnetz(y=np.asfortranarray(signal), sr = sr)
+        tonnetz = librosa.feature.tonnetz(y=np.asfortranarray(signal[:,0]), sr = sr)
         for i in range(1,signal.shape[1]):
-            tonnetz += librosa.feature.tonnetz(np.asfortranarray(signal[:,i]), sr = sr)
+            tonnetz += librosa.feature.tonnetz(y=np.asfortranarray(signal[:,i]), sr = sr)
         return tonnetz
     elif feature.lower() == "pcp_tonnetz":
         return librosa.feature.tonnetz(y=None, sr = None, chroma = get_spectrogram(signal, sr, "pcp", hop_length, fmin = fmin))
@@ -163,37 +162,37 @@ def get_spectrogram(signal, sr, feature, hop_length, n_fft = 2048, fmin = 98, n_
     
     elif feature.lower() == "mfcc":
         if len(signal.shape) == 1:
-            return librosa.feature.mfcc(np.asfortranarray(signal), sr = sr, hop_length = hop_length, n_mfcc=n_mfcc)
-        mfcc = librosa.feature.mfcc(np.asfortranarray(signal[:,0]), sr = sr, hop_length = hop_length, n_mfcc=n_mfcc)
+            return librosa.feature.mfcc(y=np.asfortranarray(signal), sr = sr, hop_length = hop_length, n_mfcc=n_mfcc)
+        mfcc = librosa.feature.mfcc(y=np.asfortranarray(signal[:,0]), sr = sr, hop_length = hop_length, n_mfcc=n_mfcc)
         for i in range(1,signal.shape[1]):
-            mfcc += librosa.feature.mfcc(np.asfortranarray(signal[:,i]), sr = sr, hop_length = hop_length, n_mfcc=n_mfcc)
+            mfcc += librosa.feature.mfcc(y=np.asfortranarray(signal[:,i]), sr = sr, hop_length = hop_length, n_mfcc=n_mfcc)
         return mfcc
     
     # For Mel spectrograms, we use the same parameters as the ones of [2].
     # [2] Grill, Thomas, and Jan Schlüter. "Music Boundary Detection Using Neural Networks on Combined Features and Two-Level Annotations." ISMIR. 2015.
     elif feature.lower() == "mel_grill":
         if len(signal.shape) == 1:
-            return np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
-        mel = np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal[:,0]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+            return np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+        mel = np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal[:,0]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
         for i in range(1,signal.shape[1]):
-            mel += np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal[:,i]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+            mel += np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal[:,i]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
         return mel
     
     elif feature == "log_mel_grill":
         if len(signal.shape) == 1:
-            return librosa.power_to_db(np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000)))
-        mel = np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal[:,0]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+            return librosa.power_to_db(np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000)))
+        mel = np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal[:,0]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
         for i in range(1,signal.shape[1]):
-            mel += np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal[:,i]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+            mel += np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal[:,i]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
         return librosa.power_to_db(mel)
     
     elif feature == "nn_log_mel_grill":
         if len(signal.shape) == 1:
-            mel = np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+            mel = np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
             return librosa.power_to_db(mel + np.ones(mel.shape))
-        mel = np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal[:,0]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+        mel = np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal[:,0]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
         for i in range(1,signal.shape[1]):
-            mel += np.abs(librosa.feature.melspectrogram(np.asfortranarray(signal[:,i]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
+            mel += np.abs(librosa.feature.melspectrogram(y=np.asfortranarray(signal[:,i]), sr = sr, n_fft=2048, hop_length = hop_length, n_mels=80, fmin=80.0, fmax=16000))
         return librosa.power_to_db(mel + np.ones(mel.shape))
     
     elif feature == "padded_log_mel_grill":
@@ -290,8 +289,8 @@ def get_audio_from_spectrogram(spectrogram, feature, hop_length, sr):
         
 # %% Implementation of PCP from MSAF (for baseline comparison)
 def get_pcp_as_msaf(signal, sr, hop_length):
-    audio_harmonic, _ = librosa.effects.hpss(signal)
-    pcp_cqt = np.abs(librosa.hybrid_cqt(audio_harmonic,
+    audio_harmonic, _ = librosa.effects.hpss(y=signal)
+    pcp_cqt = np.abs(librosa.hybrid_cqt(y=audio_harmonic,
                                         sr=sr,
                                         hop_length=hop_length,
                                         n_bins=84,
@@ -308,9 +307,9 @@ def get_pcp_as_msaf(signal, sr, hop_length):
     return pcp, frame_times
 
 def get_beatsync_pcp_as_msaf(signal, sr, hop_length):
-    audio_harmonic, audio_percussive = librosa.effects.hpss(signal)
+    audio_harmonic, audio_percussive = librosa.effects.hpss(y=signal)
 
-    pcp_cqt = np.abs(librosa.hybrid_cqt(audio_harmonic,
+    pcp_cqt = np.abs(librosa.hybrid_cqt(y=audio_harmonic,
                                         sr=sr,
                                         hop_length=hop_length,
                                         n_bins=84,

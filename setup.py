@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="as_seg",
-    version="0.1.1waspaa23",
+    version="0.1.4",
     author="Marmoret Axel",
-    author_email="axle_le@protonmail.com",
-    description="Package for the segmentation of autosimilarity matrices. This version is related to a publication in WASPAA 2023.",
+    author_email="axel.marmoret@imt-atlantique.fr",
+    description="Package for the segmentation of autosimilarity matrices. This version is related to a stable vesion on PyPi, for installation in MSAF.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://gitlab.inria.fr/amarmore/autosimilarity_segmentation",
@@ -24,17 +24,15 @@ setuptools.setup(
     ],
     license='BSD',
     install_requires=[
-        'librosa == 0.8.1',
-        'madmom == 0.16.1',
-        'matplotlib',
-        'mir_eval == 0.6',
-        'mirdata == 0.3.3',
-        'numpy == 1.22.4',
+        'librosa >= 0.6.0',
+        'madmom >= 0.16.1',
+        'matplotlib >= 1.5',
+        'mir_eval',
+        'mirdata >= 0.3.3',
+        'numpy >= 1.8.0,<1.24',
         'pandas',
-        'scipy == 1.5.4',
-        'scikit-learn',
-        'soundfile',
-        'tensorly == 0.5.1'
-    ],
-    python_requires='>=3.7.*',
+        'scikit-learn >= 0.17.0',
+        'scipy >= 0.13.0',
+        'tensorly >= 0.5.1'
+    ]
 )

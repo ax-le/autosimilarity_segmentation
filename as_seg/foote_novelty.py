@@ -26,7 +26,15 @@ import numpy as np
 from scipy import signal
 from scipy.ndimage import filters
 
-def process_msaf_own_as(input_spectrogram, M_gaussian = 66, L_peaks = 64):
+def compute_foote_ssm(input_spectrogram, pre_filter = 12):
+    spec = input_spectrogram
+    if pre_filter != 0:
+        median_filtering_size = pre_filter
+        spec = median_filter(input_spectrogram, M=median_filtering_size)
+        
+    return msaf.algorithms.foote.segmenter.compute_ssm(spec)
+
+def process_msaf_own_as(input_spectrogram = None, input_ssm = None, M_gaussian = 66, L_peaks = 64, pre_filter = 12, post_filter = 4):
         """Main process.
         Returns
         -------
@@ -35,13 +43,19 @@ def process_msaf_own_as(input_spectrogram, M_gaussian = 66, L_peaks = 64):
         est_labels : np.array(N-1)
             Estimated labels for the segments.
         """
+        assert input_ssm is not None or input_spectrogram is not None, "Either input_ssm or input_spectrogram should be provided"
 
         # Make sure that the M_gaussian is even
         if M_gaussian % 2 == 1:
             M_gaussian += 1
 
         # Self similarity matrix
-        S = msaf.algorithms.foote.segmenter.compute_ssm(input_spectrogram)
+        if input_ssm is None:
+            S = compute_foote_ssm(input_spectrogram, pre_filter)
+            input_shape = input_spectrogram.shape
+        else:
+            S = input_ssm
+            input_shape = input_ssm.shape
 
         # Compute gaussian kernel
         G = msaf.algorithms.foote.segmenter.compute_gaussian_krnl(M_gaussian)
@@ -51,10 +65,11 @@ def process_msaf_own_as(input_spectrogram, M_gaussian = 66, L_peaks = 64):
         nc = msaf.algorithms.foote.segmenter.compute_nc(S, G)
 
         # Find peaks in the novelty curve
-        est_idxs = pick_peaks(nc, L=L_peaks)
+        sigma = post_filter
+        est_idxs = pick_peaks(nc, sigma = sigma, L=L_peaks)
 
         # Add first and last frames
-        est_idxs = np.concatenate(([0], est_idxs, [input_spectrogram.shape[0] - 1]))
+        est_idxs = np.concatenate(([0], est_idxs, [input_shape[0] - 1]))
 
         # Empty labels
         est_labels = np.ones(len(est_idxs) - 1) * -1
@@ -64,11 +79,18 @@ def process_msaf_own_as(input_spectrogram, M_gaussian = 66, L_peaks = 64):
 
         return est_idxs, est_labels
         
-def pick_peaks(nc, L=16):
+def median_filter(X, M=8):
+    """Median filter along the first axis of the feature matrix X."""
+    for i in range(X.shape[1]):
+        X[:, i] = filters.median_filter(X[:, i], size=M)
+    return X
+
+def pick_peaks(nc, sigma = 4, L=16):
     """Obtain peaks from a novelty curve using an adaptive threshold."""
     offset = nc.mean() / 20.
 
-    #nc = filters.gaussian_filter1d(nc, sigma=4)  # Smooth out nc
+    if sigma != 0:
+        nc = filters.gaussian_filter1d(nc, sigma=sigma)  # Smooth out nc
 
     th = filters.median_filter(nc, size=L) + offset
     #th = filters.gaussian_filter(nc, sigma=L/2., mode="nearest") + offset
@@ -110,6 +132,55 @@ def postprocess_msaf(est_idxs, est_labels):
         est_idxs = np.asarray(est_idxs, dtype=int)
 
         return est_idxs, est_labels
+
+def my_process_segmentation_level(est_idxs, est_labels, N, frame_times, dur):
+    """Processes a level of segmentation, and converts it into times.
+
+    Parameters
+    ----------
+    est_idxs: np.array
+        Estimated boundaries in frame indeces.
+    est_labels: np.array
+        Estimated labels.
+    N: int
+        Number of frames in the whole track.
+    frame_times: np.array
+        Time stamp for each frame.
+    dur: float
+        Duration of the audio track.
+
+    Returns
+    -------
+    est_times: np.array
+        Estimated segment boundaries in seconds.
+    est_labels: np.array
+        Estimated labels for each segment.
+    """
+    assert est_idxs[0] == 0 and est_idxs[-1] == N - 1
+    assert len(est_idxs) - 1 == len(est_labels)
+
+    # Add silences, if needed
+    est_times = np.concatenate(([0], frame_times[est_idxs], [dur]))
+    silence_label = np.max(est_labels) + 1
+    est_labels = np.concatenate(([silence_label], est_labels, [silence_label]))
+
+    # Remove empty segments if needed
+    est_times, est_labels = msaf.utils.remove_empty_segments(est_times, est_labels)
+
+    # I've added these lines because bar estimates may be less precise than frame and beats.
+    if est_times[-1] < dur: # Fixing a bug, due to empty segment: [dur, dur]
+        est_times.append(dur)
+    if est_times[-1] > dur: # Fixing a bug, due to inaccuracies (rounding errors mainly)
+        if est_times[-1] - dur < 1:
+            est_times[-1] = dur
+        else:
+            #print(f"Ajout Axel: est_times[-1] = {est_times[-1]}, dur = {dur}, ce qui n'est pas normal. Voir si bug arrive souvent.")
+            est_times[-1] = dur
+    
+    # Make sure that the first and last times are 0 and duration, respectively
+    assert np.allclose([est_times[0]], [0]) and np.allclose([est_times[-1]], [dur])
+
+    return est_times, est_labels
 
 
 # %% Novelty computation
