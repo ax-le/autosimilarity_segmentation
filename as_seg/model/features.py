@@ -285,3 +285,62 @@ def get_audio_from_spectrogram(spectrogram, feature, hop_length, sr):
         return get_audio_from_spectrogram(mel, "mel_grill", hop_length, sr)
     else:
         raise err.InvalidArgumentValueException("Unknown feature representation, can't reconstruct a signal.")
+        
+        
+        
+# %% Implementation of PCP from MSAF (for baseline comparison)
+def get_pcp_as_msaf(signal, sr, hop_length):
+    audio_harmonic, _ = librosa.effects.hpss(signal)
+    pcp_cqt = np.abs(librosa.hybrid_cqt(audio_harmonic,
+                                        sr=sr,
+                                        hop_length=hop_length,
+                                        n_bins=84,
+                                        norm=np.inf,
+                                        fmin=27.5)) ** 2
+    pcp = librosa.feature.chroma_cqt(C=pcp_cqt,
+                                    sr=sr,
+                                    hop_length=hop_length,
+                                    n_octaves=6,
+                                    fmin=27.5).T
+                                    
+    frame_times = librosa.core.frames_to_time(np.arange(pcp.shape[0]), sr, hop_length)
+
+    return pcp, frame_times
+
+def get_beatsync_pcp_as_msaf(signal, sr, hop_length):
+    audio_harmonic, audio_percussive = librosa.effects.hpss(signal)
+
+    pcp_cqt = np.abs(librosa.hybrid_cqt(audio_harmonic,
+                                        sr=sr,
+                                        hop_length=hop_length,
+                                        n_bins=84,
+                                        norm=np.inf,
+                                        fmin=27.5)) ** 2
+    pcp = librosa.feature.chroma_cqt(C=pcp_cqt,
+                                    sr=sr,
+                                    hop_length=hop_length,
+                                    n_octaves=6,
+                                    fmin=27.5).T
+                                    
+    frame_times = librosa.core.frames_to_time(np.arange(pcp.shape[0]), sr, hop_length)
+    
+    # Compute beats
+    _, beat_frames = librosa.beat.beat_track(y=audio_percussive, sr=sr, hop_length=hop_length)
+
+    # To times
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr,hop_length=hop_length)
+
+    # TODO: Is this really necessary?
+    if len(beat_times) > 0 and beat_times[0] == 0:
+        beat_times = beat_times[1:]
+        beat_frames = beat_frames[1:]
+
+    # Make beat synchronous
+    beatsync_feats = librosa.util.utils.sync(pcp.T, beat_frames, pad=True).T
+
+    # Assign times (and add last time if padded)
+    beatsync_times = np.copy(beat_times)
+    if beatsync_times.shape[0] != beatsync_feats.shape[0]:
+        beatsync_times = np.concatenate((beatsync_times,
+                                         [frame_times[-1]]))
+    return beatsync_feats, beatsync_times

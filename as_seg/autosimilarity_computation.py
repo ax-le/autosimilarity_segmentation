@@ -63,6 +63,8 @@ def switch_autosimilarity(an_array, similarity_type, gamma = None, normalise = T
         return get_covariance_autosimilarity(an_array, normalise = normalise)
     elif similarity_type.lower() == "rbf":
         return get_rbf_autosimilarity(an_array, gamma, normalise = normalise)
+    elif similarity_type.lower() == "centered_rbf":
+        return get_centered_rbf_autosimilarity(an_array, gamma, normalise = normalise)
     else:
         raise err.InvalidArgumentValueException(f"Incorrect similarity type: {similarity_type}. Should be cosine, covariance or rbf.")
         
@@ -188,6 +190,22 @@ def get_rbf_autosimilarity(an_array, gamma = None, normalise = True):
     if normalise:
         this_array = l2_normalise_barwise(this_array)
     return pairwise_distances.rbf_kernel(this_array, gamma = gamma)
+    
+def get_centered_rbf_autosimilarity(an_array, gamma = None, normalise = True):
+    """
+    TODO
+    """
+    if type(an_array) is list:
+        this_array = np.array(an_array)
+    else:
+        this_array = an_array
+    this_array = this_array - this_array.mean(axis=0) # centering, i.e. subtracting the average value row-wise
+    if gamma == None:
+        gamma = get_gamma_std(this_array, scaling_factor = 1, no_diag = True, normalise = normalise)
+    if normalise:
+        this_array = l2_normalise_barwise(this_array)
+    return pairwise_distances.rbf_kernel(this_array, gamma = gamma)
+
 
 def get_gamma_std(an_array, scaling_factor = 1, no_diag = True, normalise = True):
     """

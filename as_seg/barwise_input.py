@@ -27,6 +27,7 @@ import as_seg.model.errors as err
 
 import numpy as np
 import tensorly as tl
+import librosa
 
 # %% Tensors barwise spectrograms construction
 # !!! Be extremely careful with the organization of modes, which can be either Frequency-Time at barscale-Bars (FTB) or Bars-Frequency-Time at barscale (BFT) depending on the method.
@@ -109,6 +110,8 @@ def tensorize_barwise_BFT(spectrogram, bars, hop_length_seconds, subdivision):
         t_0 = beats[0]
         t_1 = beats[1]
         samples = [int(round(t_0 + k * (t_1 - t_0)/subdivision)) for k in range(subdivision)]
+        if len(samples) != len(set(samples)): # Check for repetitions
+            raise err.ToDebugException("The subdivision is too large, it leads to repeated samples chosen in the bar!")
         if samples[-1] < spectrogram.shape[1]:
             barwise_spec.append(spectrogram[:,samples])
     return np.array(barwise_spec)
@@ -164,3 +167,14 @@ def TF_vector_to_TF_matrix(vector, frequency_dimension, subdivision):
     assert frequency_dimension*subdivision == vector.shape[0]
     return tl.fold(vector, 0, (frequency_dimension,subdivision))
 
+
+def beat_synchronize_msaf(spectrogram, frame_times, beat_frames, beat_times):
+    # Make beat synchronous
+    beatsync_feats = librosa.util.utils.sync(spectrogram.T, beat_frames, pad=True).T
+
+    # Assign times (and add last time if padded)
+    beatsync_times = np.copy(beat_times)
+    if beatsync_times.shape[0] != beatsync_feats.shape[0]:
+        beatsync_times = np.concatenate((beatsync_times,
+                                         [frame_times[-1]]))
+    return beatsync_feats, beatsync_times

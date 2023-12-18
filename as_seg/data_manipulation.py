@@ -12,9 +12,11 @@ import as_seg.model.errors as err
 
 import numpy as np
 import madmom.features.downbeats as dbt
+import madmom.features.beats as bt
 import soundfile as sf
 import mir_eval
 import scipy
+import librosa
 
 # %% Read and treat inputs
 def get_bars_from_audio(song_path):
@@ -64,6 +66,40 @@ def get_bars_from_audio(song_path):
     downbeats_times.append(song_length) # adding the last downbeat
     
     return frontiers_to_segments(downbeats_times)
+    
+def get_beats_from_audio_msaf(signal, sr, hop_length):
+    _, audio_percussive = librosa.effects.hpss(signal)
+    
+    # Compute beats
+    _, beat_frames = librosa.beat.beat_track(y=audio_percussive, sr=sr, hop_length=hop_length)
+
+    # To times
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr,hop_length=hop_length)
+
+    # TODO: Is this really necessary?
+    if len(beat_times) > 0 and beat_times[0] == 0:
+        beat_times = beat_times[1:]
+        beat_frames = beat_frames[1:]
+        
+    return beat_times, beat_frames
+    
+# %% Read and treat inputs
+def get_beats_from_audio_madmom(song_path):
+    """
+    TODO
+    """
+    act = bt.TCNBeatProcessor()(song_path)
+    proc = bt.BeatTrackingProcessor(fps=100)
+    song_beats = proc(act)
+    beats_times = []
+    
+    # if song_beats[0][1] != 1: # Adding a first downbeat at the start of the song
+        # beats_times.append(0.1)
+    # for beat in song_beats:
+        # if beat[1] == 1: # If the beat is a downbeat
+            # downbeats_times.append(beat[0])
+            
+    return frontiers_to_segments(list(song_beats))
 
 def get_segmentation_from_txt(path, annotations_type):
     """
@@ -563,9 +599,7 @@ def compute_median_deviation_of_segmentation(reference, segments_in_time):
 def compute_rates_of_segmentation(reference, segments_in_time, window_length = 0.5):
     """
     Computes True Positives, False Positives and False Negatives from estimated segments and the reference, both in seconds.    
-    Scores are computed from the mir_eval toolbox.
-    (What happens is that precision/rap/F1 are computed via mir_eval, by computing these rates but never releasing them.
-    Hence, they are recomputed here from these values.)
+    Scores are computed from the mir_eval toolbox. (In fact, the code is extracted from mir_eval.segment.detection)
 
     Parameters
     ----------
@@ -589,12 +623,24 @@ def compute_rates_of_segmentation(reference, segments_in_time, window_length = 0
         The number of False Negatives,
         ie the number of frontiers undetected (accurate frontiers which are not found in teh estimation).
 
-    """
-    ref_intervals, useless = mir_eval.util.adjust_intervals(reference,t_min=0)
-    prec, rec, _ = compute_score_of_segmentation(reference, segments_in_time, window_length = window_length)
-    tp = int(round(rec * (len(ref_intervals) + 1)))
-    fp = int(round((tp * (1 - prec))/prec))
-    fn = int(round((tp * (1 - rec))/rec))
+    """  
+    reference_intervals, _ = mir_eval.util.adjust_intervals(reference,t_min=0)
+    estimated_intervals, _ = mir_eval.util.adjust_intervals(segments_in_time, t_min=0, t_max=reference_intervals[-1, 1])
+    
+    mir_eval.segment.validate_boundary(reference_intervals, estimated_intervals, False)
+
+    # Convert intervals to boundaries
+    reference_boundaries = mir_eval.util.intervals_to_boundaries(reference_intervals)
+    estimated_boundaries = mir_eval.util.intervals_to_boundaries(estimated_intervals)
+
+    # If we have no boundaries, we get no score.
+    if len(reference_boundaries) == 0 or len(estimated_boundaries) == 0:
+        return 0, 0, 0
+
+    tp = len(mir_eval.util.match_events(reference_boundaries,estimated_boundaries,window_length))
+    fp = len(estimated_boundaries) - tp
+    fn = len(reference_boundaries) - tp
+    
     return tp, fp, fn
         
 

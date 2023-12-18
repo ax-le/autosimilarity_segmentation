@@ -14,7 +14,13 @@ This is a first release, and may contain bug. Comments are welcomed!
 
 A tutorial notebook presenting the most important components of this toolbox is available in the folder "Notebooks".
 
-It is only available if you downloaded the project from git (e.g. https://gitlab.inria.fr/amarmore/autosimilarity_segmentation), and is not available in the pip version (which is in general not accessible easily in the file tree).
+## Experimental notebook ##
+
+Experimental notebooks are available in the folder "Notebooks". They present the code used to compute the main experiments of the paper, in order to improve the reproducibility. Please tell me if any problem would appear when trying to launch them.
+
+## Data ##
+
+Some data is available with the code, in the folder "data". This includes the bar estimates, obtained with the madmom toolbox [3], the Barwise TF matrices, which are the barwise pre-processed versions of the spectrograms we use to estimate boundaries, and the estimated boundaries obtained with the CBM algorithm in the different conditions.
 
 ## Software version ##
 
@@ -37,6 +43,8 @@ Code was created by Axel Marmoret (<axel.marmoret@gmail.com>), and strongly supp
 The technique in itself was also developed by Frédéric Bimbot (<bimbot@irisa.fr>).
 
 ## References ##
-[1] A. Marmoret, J.E. Cohen, and F. Bimbot, "Convolutive Block-Matching Segmentation Algorithm with Application to Music Structure Analysis", 2022, arXiv preprint arXiv:2210.15356.
+[1] A. Marmoret, J.E. Cohen, and F. Bimbot, "Convolutive Block-Matching Segmentation Algorithm with Application to Music Structure Analysis", 2023, to be published at WASPAA 2023.
 
 [2] J. Foote, "Automatic audio segmentation using a measure of audio novelty," in: 2000 IEEE Int. Conf. Multimedia and Expo. ICME2000. Proc. Latest Advances in the Fast Changing World of Multimedia, vol. 1, IEEE, 2000, pp. 452–455.
+
+[3] Böck, S., Korzeniowski, F., Schlüter, J., Krebs, F., & Widmer, G. (2016, October). Madmom: A new python audio and music signal processing library. In Proceedings of the 24th ACM international conference on Multimedia (pp. 1174-1178).

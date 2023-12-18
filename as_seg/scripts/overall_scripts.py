@@ -54,7 +54,7 @@ def load_spec_annot_song_RWC(song_number, feature, hop_length = 32):
     references_segments = np.array(annotations)[:,0:2]
     return spectrogram, bars, references_segments
 
-def load_bar_annot_song_RWC(song_number, hop_length = 32):
+def load_bar_annot_song_RWC(song_number):
     """
     Similar to load_spec_annot_song_RWC(), but without loading the soectrogram 
     (only bars and annotations).
@@ -67,6 +67,32 @@ def load_bar_annot_song_RWC(song_number, hop_length = 32):
     annotations = dm.get_segmentation_from_txt(annot_path_mirex, "MIREX10")
     references_segments = np.array(annotations)[:,0:2]
     return bars, references_segments
+    
+def load_barwiseTF_rwc(folder_path, song_number, feature, subdivision):
+    """
+    Load the barwiseTF matrix (already pre-computed) for this song on the RWC Pop dataset.
+    """
+    if feature == "log_mel_grill":
+        try:
+            barwise_TF_matrix = np.load(f"{folder_path}/rwcpop_{song_number}_{feature}_subdivision{subdivision}.npy", allow_pickle = True)
+        except FileNotFoundError:
+            barwise_TF_matrix = np.load(f"{folder_path}/rwcpop_{song_number}_logmel_subdivision{subdivision}.npy", allow_pickle = True)
+    else:
+        barwise_TF_matrix = np.load(f"{folder_path}/rwcpop_{song_number}_{feature}_subdivision{subdivision}.npy", allow_pickle = True)
+    return barwise_TF_matrix
+    
+def load_barwiseTF_salami(folder_path, song_key, feature, subdivision):
+    """
+    Load the barwiseTF matrix (already pre-computed) for this song on the SALAMI dataset.
+    """
+    if feature == "log_mel_grill":
+        try:
+            barwise_TF_matrix = np.load(f"{folder_path}/salami_{song_key}_{feature}_subdivision{subdivision}.npy", allow_pickle = True)
+        except FileNotFoundError:
+            barwise_TF_matrix = np.load(f"{folder_path}/salami_{song_key}_logmel_subdivision{subdivision}.npy", allow_pickle = True)
+    else:
+        barwise_TF_matrix = np.load(f"{folder_path}/salami_{song_key}_{feature}_subdivision{subdivision}.npy", allow_pickle = True)
+    return barwise_TF_matrix
     
 def load_spec_annot_cometogether(feature, hop_length = 32):
     """
@@ -183,6 +209,18 @@ def load_bars(persisted_path, song_name):
     bars = np.load("{}/bars/{}.npy".format(persisted_path, song_name))
     return bars
     
+def load_or_save_beats(persisted_path, song_path):
+    """
+    TODO
+    """
+    song_name = song_path.split("/")[-1].replace(".wav","").replace(".mp3","")
+    try:
+        beats = np.load("{}/beats/{}.npy".format(persisted_path, song_name))
+    except:
+        beats = dm.get_beats_from_audio_madmom(song_path)
+        np.save("{}/beats/{}".format(persisted_path, song_name), beats)
+    return beats
+    
 def load_or_save_spectrogram(persisted_path, song_path, feature, hop_length, fmin = 98, n_fft = 2048, n_mfcc = 20):
     """
     Computes the spectrogram for this song, or load it if it were already computed.
@@ -275,6 +313,64 @@ def load_or_save_spectrogram(persisted_path, song_path, feature, hop_length, fmi
             return spectrogram
 
     return spectrogram
+
+def load_or_save_tensor_spectrogram(persisted_path, song_path, feature, hop_length, subdivision_bars, fmin = 98, n_fft = 2048, n_mfcc = 20):
+    """
+    Loads the BTF (bars - time - frequency) tensor for this song, which was persisted after a first computation, or compute it if it wasn't found.
+
+    You should prefer load_or_save_spectrogram, as it allows more possibility about tensor folding, except if you're short in space on your disk.
+
+    Parameters
+    ----------
+    persisted_path : string
+        Path where the bars and the spectrogram should be found.
+    song_path : string
+        The path of the signal of the song.
+    feature : string
+        Feature of the spectrogram, part of the identifier of the spectrogram.
+    hop_length : integer
+        hop_length of the spectrogram, part of the identifier of the spectrogram.
+    fmin : integer
+        Minimal frequence for the spectrogram, part of the identifier of the spectrogram.
+        The default is 98.
+    n_fft and n_mfcc : integers, optional
+        Both arguments are used respectively for the stft and for the mfcc computation, and are used to 
+
+    Returns
+    -------
+    numpy array
+        The tensor spectrogram of this song.
+
+    """
+    song_name = song_path.split("/")[-1].replace(".wav","").replace(".mp3","")
+    try:
+        tensor_barwise = np.load(f"{persisted_path}/tensor_barwise_ae/{song_name}_{feature}_hop{hop_length}_subdiv{subdivision_bars}.npy", allow_pickle = True)
+        return tensor_barwise
+    except FileNotFoundError:
+        the_signal, original_sampling_rate = sf.read(song_path)
+        raise NotImplementedError("Do not compute please")
+        if original_sampling_rate != 44100:
+            the_signal = librosa.core.resample(np.asfortranarray(the_signal), original_sampling_rate, 44100)
+        if "stft" in feature and "nfft" in feature:
+            if "nfft" not in feature: 
+                spectrogram = features.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft)
+            else:              
+                n_fft_arg = int(feature.split("nfft")[1])
+                spectrogram = features.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft_arg)
+        elif "mfcc" in feature:
+            if "nmfcc" not in feature:
+                spectrogram = features.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc)
+            else:
+                n_mfcc_arg = int(feature.split("nmfcc")[1])
+                spectrogram = features.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc_arg)
+        else:
+            spectrogram = features.get_spectrogram(the_signal, 44100, feature, hop_length, fmin = fmin)
+            
+        hop_length_seconds = hop_length/44100
+        bars = load_or_save_bars(persisted_path, song_path)
+        tensor_spectrogram = nn_utils.tensorize_barwise(spectrogram, bars, hop_length_seconds, subdivision_bars)
+        np.save(f"{persisted_path}/tensor_barwise_ae/{song_name}_{feature}_hop{hop_length}_subdiv{subdivision_bars}", tensor_spectrogram)
+        return tensor_spectrogram
 
 def load_or_save_spectrogram_and_bars(persisted_path, song_path, feature, hop_length, fmin = 98, n_fft = 2048, n_mfcc = 20):
     """

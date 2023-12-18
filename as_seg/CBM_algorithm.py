@@ -171,6 +171,52 @@ def convolutionnal_cost(cropped_autosimilarity, kernels):
     kern = kernels[p]
     #return np.mean(np.multiply(kern,cropped_autosimilarity))
     return np.sum(np.multiply(kern,cropped_autosimilarity)) / p**2
+    
+    
+def compute_cbm_sum_normalization(autosimilarity, min_size = 1, max_size = 32, penalty_weight = 1, penalty_func = "modulo8", bands_number = None):
+    scores = [-math.inf for i in range(len(autosimilarity))]
+    segments_best_starts = [None for i in range(len(autosimilarity))]
+    segments_best_starts[0] = 0
+    scores[0] = 0
+    kernels = compute_all_kernels(max_size, bands_number = bands_number)
+    max_conv_eight = np.amax(convolution_entire_matrix_computation(autosimilarity, kernels))
+    
+    for current_idx in range(1, len(autosimilarity)): # Parse all indexes of the autosimilarity
+        for possible_start_idx in possible_segment_start(current_idx, min_size = min_size, max_size = max_size):
+            if possible_start_idx < 0:
+                raise err.ToDebugException("Invalid value of start index, shouldn't happen.") from None
+                
+            # Convolutionnal cost between the possible start of the segment and the current index (entire segment)
+            cropped_autosimilarity = autosimilarity[possible_start_idx:current_idx,possible_start_idx:current_idx]
+            kern = kernels[len(cropped_autosimilarity)]
+            if np.sum(kern) == 0:
+                conv_cost = 0
+            else:
+                conv_cost = np.sum(np.multiply(kern,cropped_autosimilarity)) / (np.sum(kern) + len(cropped_autosimilarity))
+                        
+            segment_length = current_idx - possible_start_idx
+            penalty_cost = penalty_cost_from_arg(penalty_func, segment_length)            
+            
+            this_segment_cost = conv_cost * segment_length - penalty_cost * penalty_weight * max_conv_eight
+            # Note: conv_eight is not normalized by its size (not a problem in itself as size is contant, but generally not specified in formulas).
+
+            if possible_start_idx == 0: # Avoiding errors, as scores values are initially set to -inf.
+                if this_segment_cost > scores[current_idx]: # This segment is of larger score
+                    scores[current_idx] = this_segment_cost
+                    segments_best_starts[current_idx] = 0
+            else:
+                if scores[possible_start_idx] + this_segment_cost > scores[current_idx]: # This segment is of larger score
+                    scores[current_idx] = scores[possible_start_idx] + this_segment_cost
+                    segments_best_starts[current_idx] = possible_start_idx
+
+    segments = [(segments_best_starts[len(autosimilarity) - 1], len(autosimilarity) - 1)]
+    precedent_frontier = segments_best_starts[len(autosimilarity) - 1] # Because a segment's start is the previous one's end.
+    while precedent_frontier > 0:
+        segments.append((segments_best_starts[precedent_frontier], precedent_frontier))
+        precedent_frontier = segments_best_starts[precedent_frontier]
+        if precedent_frontier == None:
+            raise err.ToDebugException("Well... The dynamic programming algorithm took an impossible path, so it failed. Understand why.") from None
+    return segments[::-1], scores[-1]
 
 def convolution_entire_matrix_computation(autosimilarity_array, kernels, kernel_size = 8):
     """

@@ -20,6 +20,97 @@ in the Fast Changing World of Multimedia, vol. 1, IEEE, 2000,pp. 452–455.
 [2] O. Nieto and J.P. Bello, "Systematic exploration of computational music
 structure research.", in: ISMIR, 2016, pp. 547–553.
 """
+# %% Using implementation from msaf
+import msaf
+import numpy as np
+from scipy import signal
+from scipy.ndimage import filters
+
+def process_msaf_own_as(input_spectrogram, M_gaussian = 66, L_peaks = 64):
+        """Main process.
+        Returns
+        -------
+        est_idxs : np.array(N)
+            Estimated indeces the segment boundaries in frames.
+        est_labels : np.array(N-1)
+            Estimated labels for the segments.
+        """
+
+        # Make sure that the M_gaussian is even
+        if M_gaussian % 2 == 1:
+            M_gaussian += 1
+
+        # Self similarity matrix
+        S = msaf.algorithms.foote.segmenter.compute_ssm(input_spectrogram)
+
+        # Compute gaussian kernel
+        G = msaf.algorithms.foote.segmenter.compute_gaussian_krnl(M_gaussian)
+        #plt.imshow(S, interpolation="nearest", aspect="auto"); plt.show()
+
+        # Compute the novelty curve
+        nc = msaf.algorithms.foote.segmenter.compute_nc(S, G)
+
+        # Find peaks in the novelty curve
+        est_idxs = pick_peaks(nc, L=L_peaks)
+
+        # Add first and last frames
+        est_idxs = np.concatenate(([0], est_idxs, [input_spectrogram.shape[0] - 1]))
+
+        # Empty labels
+        est_labels = np.ones(len(est_idxs) - 1) * -1
+
+        # Post process estimations
+        est_idxs, est_labels = postprocess_msaf(est_idxs, est_labels)
+
+        return est_idxs, est_labels
+        
+def pick_peaks(nc, L=16):
+    """Obtain peaks from a novelty curve using an adaptive threshold."""
+    offset = nc.mean() / 20.
+
+    #nc = filters.gaussian_filter1d(nc, sigma=4)  # Smooth out nc
+
+    th = filters.median_filter(nc, size=L) + offset
+    #th = filters.gaussian_filter(nc, sigma=L/2., mode="nearest") + offset
+
+    peaks = []
+    for i in range(1, nc.shape[0] - 1):
+        # is it a peak?
+        if nc[i - 1] < nc[i] and nc[i] > nc[i + 1]:
+            # is it above the threshold?
+            if nc[i] > th[i]:
+                peaks.append(i)
+    #plt.plot(nc)
+    #plt.plot(th)
+    #for peak in peaks:
+        #plt.axvline(peak)
+    #plt.show()
+
+    return peaks
+        
+def postprocess_msaf(est_idxs, est_labels):
+        """Post processes the estimations from the algorithm, removing empty
+        segments and making sure the lenghts of the boundaries and labels
+        match."""
+        # Make sure we are using the previously input bounds, if any
+        # if self.in_bound_idxs is not None:
+            # F = self._preprocess()
+            # est_labels = msaf.utils.synchronize_labels(self.in_bound_idxs, est_idxs,
+                                              # est_labels, F.shape[0])
+            # est_idxs = self.in_bound_idxs
+
+        # Remove empty segments if needed
+        est_idxs, est_labels = msaf.utils.remove_empty_segments(est_idxs, est_labels)
+
+        assert len(est_idxs) - 1 == len(est_labels), "Number of boundaries " \
+            "(%d) and number of labels(%d) don't match" % (len(est_idxs),
+                                                           len(est_labels))
+
+        # Make sure the indeces are integers
+        est_idxs = np.asarray(est_idxs, dtype=int)
+
+        return est_idxs, est_labels
+
 
 # %% Novelty computation
 def novelty_cost(cropped_autosimilarity):
