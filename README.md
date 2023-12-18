@@ -4,7 +4,7 @@ Hello, and welcome on this repository!
 
 This project aims at computing autosimilarity matrices, and segmenting them, which consists of the task of structural segmentation.
 
-The current version contains the CBM algorithm [1], along with a (low-effort) implementation of Foote's novelty algorithm [2].
+The current version contains the CBM algorithm [1], along with an implementation of Foote's novelty algorithm [2] based on the MSAF toolbox [3].
 
 It can be installed using pip as `pip install as-seg`.
 
@@ -18,9 +18,11 @@ A tutorial notebook presenting the most important components of this toolbox is 
 
 Experimental notebooks are available in the folder "Notebooks". They present the code used to compute the main experiments of the paper, in order to improve the reproducibility. Please tell me if any problem would appear when trying to launch them.
 
+Experimental Notebooks requires some pre-computed data to work, which can be found on zenodo: https://zenodo.org/records/10168387. DOI: 10.5281/zenodo.10168386.
+
 ## Data ##
 
-Some data is available with the code, in the folder "data". This includes the bar estimates, obtained with the madmom toolbox [3], the Barwise TF matrices, which are the barwise pre-processed versions of the spectrograms we use to estimate boundaries, and the estimated boundaries obtained with the CBM algorithm in the different conditions.
+Should be obtained from Zenodo: https://zenodo.org/records/10168387. DOI: 10.5281/zenodo.10168386.
 
 ## Software version ##
 
@@ -32,7 +34,7 @@ You should cite the package `as_seg`, available on HAL (https://hal.archives-ouv
 
 Here are two styles of citations:
 
-As a bibtex format, this should be cited as: @softwareversion{marmoret2022as_seg, title={as\_seg: module for computing and segmenting autosimilarity matrices}, author={Marmoret, Axel and Cohen, J{\'e}r{\'e}my and Bimbot, Fr{\'e}d{\'e}ric}, URL={https://gitlab.inria.fr/amarmore/autosimilarity_segmentation}, LICENSE = {BSD 3-Clause ''New'' or ''Revised'' License}, year={2022}}
+As a bibtex format, this should be cited as: @softwareversion{marmoret2022as_seg, title={as\_seg: module for computing and segmenting autosimilarity matrices}, author={Marmoret, Axel and Cohen, J{\'e}r{\'e}my and Bimbot, Fr{\'e}d{\'e}ric}, LICENSE = {BSD 3-Clause ''New'' or ''Revised'' License}, year={2022}}
 
 In the IEEE style, this should be cited as: A. Marmoret, J.E. Cohen, and F. Bimbot, "as_seg: module for computing and segmenting autosimilarity matrices," 2022, url: https://gitlab.inria.fr/amarmore/autosimilarity_segmentation.
 
@@ -43,8 +45,10 @@ Code was created by Axel Marmoret (<axel.marmoret@gmail.com>), and strongly supp
 The technique in itself was also developed by Frédéric Bimbot (<bimbot@irisa.fr>).
 
 ## References ##
-[1] A. Marmoret, J.E. Cohen, and F. Bimbot, "Convolutive Block-Matching Segmentation Algorithm with Application to Music Structure Analysis", 2023, to be published at WASPAA 2023.
+[1] A. Marmoret, J.E. Cohen, F. Bimbot. Barwise Music Structure Analysis with the Correlation Block-Matching Segmentation Algorithm. Transactions of the International Society for Music Information Retrieval (TISMIR), 2023, 6 (1), pp.167-185. ⟨10.5334/tismir.167⟩. ⟨hal-04323556⟩, https://hal.science/hal-04323556.
 
 [2] J. Foote, "Automatic audio segmentation using a measure of audio novelty," in: 2000 IEEE Int. Conf. Multimedia and Expo. ICME2000. Proc. Latest Advances in the Fast Changing World of Multimedia, vol. 1, IEEE, 2000, pp. 452–455.
 
-[3] Böck, S., Korzeniowski, F., Schlüter, J., Krebs, F., & Widmer, G. (2016, October). Madmom: A new python audio and music signal processing library. In Proceedings of the 24th ACM international conference on Multimedia (pp. 1174-1178).
+[3] Nieto, O., Bello, J. P., Systematic Exploration Of Computational Music Structure Research. Proc. of the 17th International Society for Music Information Retrieval Conference (ISMIR). New York City, NY, USA, 2016.
+
+[4] Böck, S., Korzeniowski, F., Schlüter, J., Krebs, F., & Widmer, G. (2016, October). Madmom: A new python audio and music signal processing library. In Proceedings of the 24th ACM international conference on Multimedia (pp. 1174-1178).
