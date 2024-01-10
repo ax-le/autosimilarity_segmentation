@@ -25,7 +25,7 @@ setuptools.setup(
     license='BSD',
     install_requires=[
         'librosa >= 0.6.0',
-        'madmom @ https://github.com/CPJKU/madmom/tarball/master#egg=madmom-0.17dev',
+        'madmom @ git+https://github.com/CPJKU/madmom',
         'matplotlib >= 1.5',
         'mir_eval',
         'mirdata >= 0.3.3',
