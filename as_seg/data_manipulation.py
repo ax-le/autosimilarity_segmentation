@@ -49,22 +49,14 @@ def get_bars_from_audio(song_path):
     act = dbt.RNNDownBeatProcessor()(song_path)
     proc = dbt.DBNDownBeatTrackingProcessor(beats_per_bar=[3,4], fps=100)
     song_beats = proc(act)
-    downbeats_times = []
+    downbeats_times = [song_beats[0][0]]
     
-    if song_beats[0][1] != 1: # Adding a first downbeat at the start of the song
-        downbeats_times.append(0.1)
-    for beat in song_beats:
+    for beat in song_beats[1:]: # The first beat is already added
         if beat[1] == 1: # If the beat is a downbeat
             downbeats_times.append(beat[0])
             
-    # The following block of code artificially adds bars to the end of the song, in order to span the total song length.
-    # It seems like a good idea initially but may be detrimental, and should be debated anyway.
-    average_bar_length = np.mean([downbeats_times[i + 1] - downbeats_times[i] for i in range(len(downbeats_times) - 1)]) # average bar length in the song
     song_length = act.shape[0]/100 # Total length of the song
-    while downbeats_times[-1] + 1.1*average_bar_length < song_length: # As long as the bar estimation does not cover the entire song
-        downbeats_times.append(round(downbeats_times[-1] + average_bar_length, 2)) # artifically adds bars of the length of the average bar length in the song
     downbeats_times.append(song_length) # adding the last downbeat
-    
     return frontiers_to_segments(downbeats_times)
     
 def get_beats_from_audio_msaf(signal, sr, hop_length):
@@ -91,8 +83,8 @@ def get_beats_from_audio_madmom(song_path):
     act = bt.TCNBeatProcessor()(song_path)
     proc = bt.BeatTrackingProcessor(fps=100)
     song_beats = proc(act)
-    beats_times = []
     
+    # beats_times = []    
     # if song_beats[0][1] != 1: # Adding a first downbeat at the start of the song
         # beats_times.append(0.1)
     # for beat in song_beats:
