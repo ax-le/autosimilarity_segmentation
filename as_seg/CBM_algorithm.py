@@ -14,7 +14,7 @@ See [1] for more details.
 
 References
 ----------
-[1] Marmoret, A., Cohen, J. E., & Bimbot, F., "Convolutive Block-Matching Segmentation Algorithm with Application to Music Structure Analysis", 2022, arXiv preprint arXiv:2210.15356.
+[1] Marmoret, A., Cohen, J. E., & Bimbot, F. (2023). Barwise Music Structure Analysis with the Correlation Block-Matching Segmentation Algorithm. Transactions of the International Society for Music Information Retrieval (TISMIR), 6(1), 167-185.
 """
 
 import as_seg.model.errors as err
