@@ -30,5 +30,5 @@ path_data_persisted_salami = f"{path_parent_of_data}/data/annotations/salami" ##
 path_entire_salami = "C:/Users/amarmore/Desktop/Audio samples/SALAMI" ## Path where are stored wav files of SALAMI (path where it is downloaded by mirdata also)
 
 # Come Together
-come_together = "C:/Users/amarmore/this_folder/The Beatles - Come Together"
-#path_data_persisted_come_together = "C:/Users/amarmore/Desktop/data_persisted"
+come_together = "/home/a23marmo/this_folder/The Beatles - Come Together"
+path_data_persisted_come_together = "/home/a23marmo/Bureau/data_persisted/cometogether"
