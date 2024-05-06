@@ -18,7 +18,7 @@ import librosa
 import mirdata
 
 # Module encapsulating the computation of features from the signal
-import as_seg.model.features as features
+import as_seg.model.signal_to_spectrogram as signal_to_spectrogram
 
 # General module for manipulating data: conversion between time, bars, frame indexes, loading of data, ...
 import as_seg.data_manipulation as dm
@@ -36,7 +36,7 @@ import as_seg.CBM_algorithm as cbm
 from as_seg.model.current_plot import *
 
 # %% Loading annotations and defining the audio path
-path_to_beatles_dataset = 'C:/Users/amarmore/this_folder/Beatles dataset/' # To change
+path_to_beatles_dataset = '/home/a23marmo/datasets/beatles' # To change
 beatles = mirdata.initialize('beatles', path_to_beatles_dataset)
 beatles.download()
 
@@ -56,7 +56,7 @@ hop_length = 32 # Oversampling the spectrogram, to select frames which will be e
 hop_length_seconds = hop_length/sampling_rate # As bars are in seconds, we convert this hop length in seconds.
 subdivision_bars = 96 # The number of time samples to consider in each bar.
 
-log_mel = features.get_spectrogram(the_signal, sampling_rate, "log_mel_grill", hop_length = hop_length) # Log_mel spectrogram
+log_mel = signal_to_spectrogram.get_spectrogram(the_signal, sampling_rate, "log_mel", hop_length = hop_length) # Log_mel spectrogram
 
 # %% Cosine autosimilarity
 barwise_TF_cosine = bi.barwise_TF_matrix(log_mel, bars, hop_length_seconds, subdivision_bars)
