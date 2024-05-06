@@ -11,6 +11,7 @@ import as_seg.model.errors as err
 import numpy as np
 import sklearn.metrics.pairwise as pairwise_distances
 import warnings
+eps = 1e-10
 
 def switch_autosimilarity(an_array, similarity_type, gamma = None, normalise = True):
     """
@@ -59,8 +60,8 @@ def switch_autosimilarity(an_array, similarity_type, gamma = None, normalise = T
     """
     if similarity_type.lower() == "cosine":
         return get_cosine_autosimilarity(an_array)#, normalise = normalise)
-    elif similarity_type.lower() == "covariance":
-        return get_covariance_autosimilarity(an_array, normalise = normalise)
+    elif similarity_type.lower() == "autocorrelation" or similarity_type.lower() == "covariance":
+        return get_autocorrelation_autosimilarity(an_array, normalise = normalise)
     elif similarity_type.lower() == "rbf":
         return get_rbf_autosimilarity(an_array, gamma, normalise = normalise)
     elif similarity_type.lower() == "centered_rbf":
@@ -85,11 +86,12 @@ def l2_normalise_barwise(an_array):
         The normalised array.
 
     """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="invalid value encountered in true_divide") # Avoiding to show the warning, as it's handled, not te confuse the user.
-        an_array_T = an_array.T/np.linalg.norm(an_array, axis = 1)
-        an_array_T = np.where(np.isnan(an_array_T), 1e-10, an_array_T) # Replace null lines, avoiding future errors in handling values.
-    return an_array_T.T
+    norm = np.linalg.norm(an_array, axis = 1)
+    an_array_T = np.transpose(an_array)
+    out = np.inf * np.ones_like(an_array_T)
+    np.divide(an_array_T, norm, out = out, where=norm!=0)
+    an_array_T = np.where(np.isinf(out), eps, out)
+    return np.transpose(an_array_T)
 
 def get_cosine_autosimilarity(an_array):#, normalise = True):
     """
@@ -121,9 +123,15 @@ def get_cosine_autosimilarity(an_array):#, normalise = True):
 
 def get_covariance_autosimilarity(an_array, normalise = True):
     """
-    Computes the autosimilarity matrix, where the similarity function is the covariance.
+    Note: deprecated. The name of the matrix became "Autocorrelation" in the TISMIR version of the paper.
+    """
+    return get_autocorrelation_autosimilarity(an_array, normalise = normalise)
+
+def get_autocorrelation_autosimilarity(an_array, normalise = True):
+    """
+    Computes the autosimilarity matrix, where the similarity function is the autocorrelation.
     
-    The covariance similarity function corresponds to the dot product of centered features:
+    The autocorrelation similarity function corresponds to the dot product of centered features:
     .. math::
         s_{x_i,x_j} = \langle x_i - \hat{x}, x_j - \hat{x} \rangle
 
@@ -139,7 +147,7 @@ def get_covariance_autosimilarity(an_array, normalise = True):
     Returns
     -------
     numpy array
-        The covariance autosimilarity of this array.
+        The autocorrelation autosimilarity of this array.
 
     """
     if type(an_array) is list:
