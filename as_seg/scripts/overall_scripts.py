@@ -16,7 +16,7 @@ import numpy as np
 
 import as_seg.data_manipulation as dm
 import as_seg.barwise_input as bi
-import as_seg.model.features as features
+import as_seg.model.signal_to_spectrogram as signal_to_spectrogram
 import as_seg.model.errors as err
 import as_seg.scripts.default_path as paths
 
@@ -302,32 +302,32 @@ def load_or_save_spectrogram(dataset, song_path, feature, hop_length, fmin = 98,
     except FileNotFoundError:
         if "log_mel_grill" in feature:
             mel = load_or_save_spectrogram(dataset, song_path, "mel_grill", hop_length, fmin = fmin, n_fft = n_fft, n_mfcc = n_mfcc)
-            return features.get_log_mel_from_mel(mel, feature)
+            return signal_to_spectrogram.get_log_mel_from_mel(mel, feature)
         elif feature == "mel" or feature == "log_mel" or feature == "logmel":
             raise err.InvalidArgumentValueException(f"Invalid mel parameter ({feature}), are't you looking for mel_grill?")
         else:
             the_signal, _ = librosa.load(song_path, sr=44100)
             if "stft" in feature:
                 if "nfft" not in feature: 
-                    spectrogram = features.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft)
+                    spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft)
                 else:              
                     n_fft_arg = int(feature.split("nfft")[1])
-                    spectrogram = features.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft_arg)
+                    spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft_arg)
             elif "mfcc" in feature:
                 if "nmfcc" not in feature:
-                    spectrogram = features.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc)   
+                    spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc)   
                 else:
                     n_mfcc_arg = int(feature.split("nmfcc")[1])
-                    spectrogram = features.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc_arg)
+                    spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc_arg)
             elif feature == "pcp_tonnetz":
                 # If chromas are already computed, try to load them instead of recomputing them.
                 chromas = load_or_save_spectrogram(dataset, song_path, "pcp", hop_length, fmin = fmin)
                 spectrogram = librosa.feature.tonnetz(y=None, sr = None, chroma = chromas)
             elif feature == "pcp":
                 # If it wasn't pcp_tonnetz, compute the spectrogram, and then save it.
-                spectrogram = features.get_spectrogram(the_signal, 44100, feature, hop_length, fmin = fmin)
+                spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, feature, hop_length, fmin = fmin)
             else:
-                spectrogram = features.get_spectrogram(the_signal, 44100, feature, hop_length)
+                spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, feature, hop_length)
         
             name_spectrogram = format_name_spectrogram_params(song_name, feature, hop_length, fmin, n_fft, n_mfcc)
             np.save(f"{paths.path_data_persisted}/{dataset}/spectrograms/{name_spectrogram}", spectrogram)
@@ -535,7 +535,7 @@ def load_mirex10_annot_song_RWC(song_number):
     Loads the MIREX10 annotations for this song.
     """
     annotations_mirex = f"{paths.path_annotation_rwcpop}/MIREX10"
-    annot_path_mirex = "{}/{}".format(annotations_mirex, dm.get_annotation_name_from_song(song_number, "MIREX10"))
+    annot_path_mirex = f"{annotations_mirex}/{dm.get_annotation_name_from_song(song_number, 'MIREX10')}"
     annotations = dm.get_segmentation_from_txt(annot_path_mirex, "MIREX10")
     references_segments = np.array(annotations)[:,0:2]
     return references_segments
@@ -622,18 +622,18 @@ def load_or_save_tensor_spectrogram(dataset, song_path, feature, hop_length, sub
         raise NotImplementedError("Do not compute please")
         if "stft" in feature and "nfft" in feature:
             if "nfft" not in feature: 
-                spectrogram = features.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft)
+                spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft)
             else:              
                 n_fft_arg = int(feature.split("nfft")[1])
-                spectrogram = features.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft_arg)
+                spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "stft", hop_length, n_fft = n_fft_arg)
         elif "mfcc" in feature:
             if "nmfcc" not in feature:
-                spectrogram = features.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc)
+                spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc)
             else:
                 n_mfcc_arg = int(feature.split("nmfcc")[1])
-                spectrogram = features.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc_arg)
+                spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, "mfcc", hop_length, n_mfcc = n_mfcc_arg)
         else:
-            spectrogram = features.get_spectrogram(the_signal, 44100, feature, hop_length, fmin = fmin)
+            spectrogram = signal_to_spectrogram.get_spectrogram(the_signal, 44100, feature, hop_length, fmin = fmin)
             
         hop_length_seconds = hop_length/44100
         bars = load_or_save_bars(persisted_path, song_path)
@@ -650,7 +650,7 @@ def load_or_save_pcp_msaf(dataset, song_path, hop_length):
     except FileNotFoundError:
         signal, sr = librosa.load(song_path, sr=44100)
         duration = len(signal) / float(sr)
-        pcp, frame_times = features.get_pcp_as_msaf(signal, sr, hop_length)
+        pcp, frame_times = signal_to_spectrogram.get_pcp_as_msaf(signal, sr, hop_length)
         np.save(f"{paths.path_data_persisted}/{dataset}/pcp_msaf/{song_name}_hop{hop_length}", (pcp, frame_times, duration))
 
     return pcp, frame_times, duration
