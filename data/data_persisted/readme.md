@@ -1,1 +1,0 @@
-﻿Data was originally on git, but took close to 9GB of space. Hence, it was removed from git and moved on a zenodo upload. You can find it here: https://zenodo.org/records/10168387. DOI: 10.5281/zenodo.10168386.

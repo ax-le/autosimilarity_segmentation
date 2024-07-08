@@ -16,9 +16,7 @@ A tutorial notebook presenting the most important components of this toolbox is 
 
 ## Experimental notebook ##
 
-Experimental notebooks are available in the folder "Notebooks". They present the code used to compute the main experiments of the paper, in order to improve the reproducibility. Please tell me if any problem would appear when trying to launch them.
-
-Experimental Notebooks requires some pre-computed data to work, which can be found on zenodo: https://zenodo.org/records/10168387. DOI: 10.5281/zenodo.10168386.
+A Tutorial notebook is presented in the "Notebooks" folder. In older version of the code, you may find Notebooks presenting experiments associated with publications.
 
 ## Data ##
 
@@ -40,7 +38,7 @@ In the IEEE style, this should be cited as: A. Marmoret, J.E. Cohen, and F. Bimb
 
 ## Credits ##
 
-Code was created by Axel Marmoret (<axel.marmoret@gmail.com>), and strongly supported by Jeremy E. Cohen (<jeremy.cohen@cnrs.fr>).
+Code was created by Axel Marmoret (<axel.marmoret@imt-atlantique.fr>), and strongly supported by Jeremy E. Cohen (<jeremy.cohen@cnrs.fr>).
 
 The technique in itself was also developed by Frédéric Bimbot (<bimbot@irisa.fr>).
 

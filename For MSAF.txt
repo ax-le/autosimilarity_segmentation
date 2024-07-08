@@ -1,0 +1,7 @@
+In the files vol.py and sivm_search.py, in the folder ~\AppData\Local\Continuum\anaconda3\envs\neural_net\lib\site-packages\msaf\pymf\ (using Anaconda to handle the MSAF distribution), I had to change:
+from scipy.misc import factorial
+into:  
+try:
+    from scipy.misc import factorial
+except:
+    from scipy.special import factorial
