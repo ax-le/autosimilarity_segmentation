@@ -11,7 +11,7 @@ setuptools.setup(
     description="Package for the segmentation of autosimilarity matrices. This version is related to a stable vesion on PyPi, for installation in MSAF.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.inria.fr/amarmore/autosimilarity_segmentation",
+    url="https://gitlab.imt-atlantique.fr/a23marmo/autosimilarity_segmentation",
     packages=setuptools.find_packages(),
     classifiers=[
         "License :: OSI Approved :: BSD License",
