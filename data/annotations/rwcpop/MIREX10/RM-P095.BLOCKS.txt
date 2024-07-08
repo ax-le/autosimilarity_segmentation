@@ -1,2 +1,0 @@
-type	II
-pulses	24,16

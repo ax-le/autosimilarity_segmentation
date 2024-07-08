@@ -1,2 +1,0 @@
-type	III
-pulses	20,16

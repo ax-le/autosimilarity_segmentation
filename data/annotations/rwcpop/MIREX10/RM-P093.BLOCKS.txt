@@ -1,2 +1,0 @@
-type	I
-pulses	20
