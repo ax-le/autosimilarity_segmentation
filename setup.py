@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="as_seg",
-    version="0.1.9",
+    version="0.1.10",
     author="Marmoret Axel",
     author_email="axel.marmoret@imt-atlantique.fr",
     description="Package for the segmentation of autosimilarity matrices. This version is related to a stable vesion on PyPi, for installation in MSAF.",
