@@ -555,7 +555,7 @@ def compute_score_from_frontiers_in_bar(reference, frontiers_in_bar, bars, windo
     frontiers_in_time = frontiers_from_bar_to_time(frontiers_in_bar, bars)
     return compute_score_of_segmentation(reference, frontiers_to_segments(frontiers_in_time), window_length = window_length)
 
-def compute_score_of_segmentation(reference, segments_in_time, window_length = 0.5):
+def compute_score_of_segmentation(reference, segments_in_time, window_length = 0.5, trim = False):
     """
     Computes precision, recall and f measure from estimated segments and the reference, both in seconds.    
     Scores are computed from the mir_eval toolbox.
@@ -569,6 +569,11 @@ def compute_score_of_segmentation(reference, segments_in_time, window_length = 0
     window_length : float, optional
         The window size for the score (tolerance for the frontier to be validated).
         The default is 0.5.
+    trim : boolean, optional
+        Whether (True) or not (False) the first and last boundaries should be "trimmed", 
+        i.e. discarded in the computation of accurate boundaries.
+        Default is False, meaning that they are kept by default.
+        This may artifically increase the metrics, but is the standard in the benchmarks.
 
     Returns
     -------
@@ -586,14 +591,14 @@ def compute_score_of_segmentation(reference, segments_in_time, window_length = 0
     ref_intervals, useless = mir_eval.util.adjust_intervals(reference,t_min=0)
     est_intervals, useless = mir_eval.util.adjust_intervals(np.array(segments_in_time), t_min=0, t_max=ref_intervals[-1, 1])
     try:
-        return mir_eval.segment.detection(ref_intervals, est_intervals, window = window_length, trim = True)
+        return mir_eval.segment.detection(ref_intervals, est_intervals, window = window_length, trim = trim)
     except ValueError:
         cleaned_intervals = []
         #print("A segment is (probably) composed of the same start and end. Can happen with time -> bar -> time conversion, but should'nt happen for data originally segmented in bars.")
         for idx in range(len(est_intervals)):
             if est_intervals[idx][0] != est_intervals[idx][1]:
                 cleaned_intervals.append(est_intervals[idx])
-        return mir_eval.segment.detection(ref_intervals, np.array(cleaned_intervals), window = window_length, trim = True)
+        return mir_eval.segment.detection(ref_intervals, np.array(cleaned_intervals), window = window_length, trim = trim)
 
 def compute_median_deviation_of_segmentation(reference, segments_in_time):
     """
