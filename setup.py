@@ -31,7 +31,7 @@ setuptools.setup(
         'mir_eval',
         'mirdata >= 0.3.3',
         'smart_open', # For mirdata, not installed by default, may be fixed in future release
-        'numpy >= 1.8.0,<1.24',
+        'numpy >= 1.8.0',
         'pandas',
         'scikit-learn >= 0.17.0',
         'scipy >= 0.13.0',
