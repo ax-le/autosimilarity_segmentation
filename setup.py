@@ -26,7 +26,7 @@ setuptools.setup(
     install_requires=[
         'base_audio',
         'librosa >= 0.10',
-        'madmom',# @ git+https://github.com/CPJKU/madmom',
+        'madmom @ git+https://github.com/CPJKU/madmom',
         'matplotlib >= 1.5',
         'mir_eval',
         'mirdata >= 0.3.3',
