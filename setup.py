@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="as_seg",
-    version="0.1.10",
+    version="0.1.11",
     author="Marmoret Axel",
     author_email="axel.marmoret@imt-atlantique.fr",
     description="Package for the segmentation of autosimilarity matrices. This version is related to a stable vesion on PyPi, for installation in MSAF.",
@@ -26,7 +26,7 @@ setuptools.setup(
     install_requires=[
         'base_audio',
         'librosa >= 0.10',
-        'madmom @ git+https://github.com/CPJKU/madmom',
+        'madmom',# @ git+https://github.com/CPJKU/madmom',
         'matplotlib >= 1.5',
         'mir_eval',
         'mirdata >= 0.3.3',
