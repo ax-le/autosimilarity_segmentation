@@ -70,7 +70,9 @@ def tensorize_barwise_BFT(spectrogram, bars, hop_length_seconds, subdivision, su
 
     """
     barwise_spec = []
-    bars_idx = dm.segments_from_time_to_frame_idx(bars[1:], hop_length_seconds)
+    if bars[0][0] == 0: # or (bars[0][1] - bars[0][0] < 0.5):
+        bars = bars[1:] # Remove the first bar if it starts at 0, because this is probably a silenced first bar.
+    bars_idx = dm.segments_from_time_to_frame_idx(bars, hop_length_seconds)
     if subset_nb_bars is not None:
         bars_idx = bars_idx[:subset_nb_bars]
     for idx, beats in enumerate(bars_idx):
@@ -113,7 +115,9 @@ def tensorize_barwise_FTB(spectrogram, bars, hop_length_seconds, subdivision, su
 
     """
     freq_len = spectrogram.shape[0]
-    bars_idx = dm.segments_from_time_to_frame_idx(bars[1:], hop_length_seconds)
+    if bars[0] == 0 or bars[0][1] - bars[0][0] < 0.5:
+        bars = bars[1:] # Remove the first bar if it is too short or if it starts at 0, because this is probably a silenced first bar.
+    bars_idx = dm.segments_from_time_to_frame_idx(bars, hop_length_seconds)
     if subset_nb_bars is not None:
         bars_idx = bars_idx[:subset_nb_bars]
     samples_init = [int(round(bars_idx[0][0] + k * (bars_idx[0][1] - bars_idx[0][0])/subdivision)) for k in range(subdivision)]

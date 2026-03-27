@@ -22,11 +22,11 @@ def switch_autosimilarity(an_array, similarity_type, gamma = None, normalise = T
     Computes it with different possible similarity function s_{x_i,x_j} (given two bars denoted as x_i and x_j):
         - "cosine" for the cosine similarity, i.e. the normalised dot product:
         .. math::
-            s_{x_i,x_j} = \\frac{\langle x_i, x_j \rangle}{||x_i|| ||x_j||}
+            s_{x_i,x_j} = \\frac{\\langle x_i, x_j \\rangle}{||x_i|| ||x_j||}
         -"covariance" for a covariance similarity, 
         i.e. the dot product of centered features:
         .. math::
-            s_{x_i,x_j} = \langle x_i - \hat{x}, x_j - \hat{x} \rangle
+            s_{x_i,x_j} = \\langle x_i - \\hat{x}, x_j - \\hat{x} \\rangle
         -"rbf" for the Radial Basis Function similarity, 
         i.e. the exponent of the opposite of the euclidean distance between features:
         .. math::
@@ -67,7 +67,7 @@ def switch_autosimilarity(an_array, similarity_type, gamma = None, normalise = T
     elif similarity_type.lower() == "centered_rbf":
         return get_centered_rbf_autosimilarity(an_array, gamma, normalise = normalise)
     else:
-        raise err.InvalidArgumentValueException(f"Incorrect similarity type: {similarity_type}. Should be cosine, covariance or rbf.")
+        raise err.InvalidArgumentValueException(f"Incorrect similarity type: {similarity_type}. Should be cosine, autocorrelation or rbf.")
         
 def l2_normalise_barwise(an_array):
     """
@@ -99,7 +99,7 @@ def get_cosine_autosimilarity(an_array):#, normalise = True):
     
     The cosine similarity function is the normalised dot product between two bars, i.e.:
     .. math::
-        s_{x_i,x_j} = \\frac{\langle x_i, x_j \rangle}{||x_i|| ||x_j||}
+        s_{x_i,x_j} = \\frac{\\langle x_i, x_j \\rangle}{||x_i|| ||x_j||}
     
     Parameters
     ----------
@@ -133,7 +133,7 @@ def get_autocorrelation_autosimilarity(an_array, normalise = True):
     
     The autocorrelation similarity function corresponds to the dot product of centered features:
     .. math::
-        s_{x_i,x_j} = \langle x_i - \hat{x}, x_j - \hat{x} \rangle
+        s_{x_i,x_j} = \\langle x_i - \\hat{x}, x_j - \\hat{x} \\rangle
 
     Parameters
     ----------
@@ -243,12 +243,35 @@ def get_gamma_std(an_array, scaling_factor = 1, no_diag = True, normalise = True
         The gamma parameter in the RBF similarity function.
 
     """
+    def _handle_edge_cases(final_scaling):
+        """Handle edge cases in gamma scaling (NaN, inf, negative/zero)."""
+        MIN_GAMMA = eps
+        MAX_GAMMA = 1/eps
+        
+        if np.isnan(final_scaling):
+            warnings.warn(f"Gamma is NaN. Setting scaling factor to 1.0.")
+            return 1.0
+        
+        if np.isinf(final_scaling):
+            warnings.warn(f"Gamma is infinite. Setting scaling factor to {MAX_GAMMA:.0e}.")
+            return MAX_GAMMA
+        
+        if final_scaling <= 0:
+            warnings.warn(f"Gamma is non-positive. Setting scaling factor to {MIN_GAMMA:.0e}.")
+            return MIN_GAMMA
+        
+        return final_scaling
+
     if normalise:
         an_array = l2_normalise_barwise(an_array)
     euc_dist = pairwise_distances.euclidean_distances(an_array)
     if not no_diag:
-        return scaling_factor/(2*np.std(euc_dist))
+        final_scaling = scaling_factor/(2*np.std(euc_dist))
     else:
         for i in range(len(euc_dist)):
             euc_dist[i,i] = float('NaN')
-        return scaling_factor/(2*np.nanstd(euc_dist))
+        final_scaling = scaling_factor/(2*np.nanstd(euc_dist))
+    
+    # Handle edge cases for final_scaling
+    final_scaling = _handle_edge_cases(final_scaling)
+    return final_scaling

@@ -25,16 +25,15 @@ setuptools.setup(
     license='BSD',
     install_requires=[
         'base_audio',
-        'librosa >= 0.10',
-        'madmom @ git+https://github.com/CPJKU/madmom',
+        'librosa > 0.10.0',
         'matplotlib >= 1.5',
         'mir_eval',
         'mirdata >= 0.3.3',
-        'smart_open', # For mirdata, not installed by default, may be fixed in future release
-        'numpy >= 1.8.0',
+        'smart_open', # For mirdata, not installed by default, may be fixed in future release
+        'numpy >= 1.26.4', # Version pinned for beat_this, but might evolve.
         'pandas',
         'scikit-learn >= 0.17.0',
-        'scipy >= 0.13.0',
+        'scipy >1.6.1',
         'tensorly >= 0.5.1',
         'IPython'
     ]

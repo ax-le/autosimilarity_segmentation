@@ -1,0 +1,12 @@
+base_audio
+librosa>0.10.0
+matplotlib>=1.5
+mir_eval
+mirdata>=0.3.3
+smart_open
+numpy>=1.26.4
+pandas
+scikit-learn>=0.17.0
+scipy>1.6.1
+tensorly>=0.5.1
+IPython
