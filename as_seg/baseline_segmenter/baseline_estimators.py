@@ -32,7 +32,7 @@ class SegmenterScoringMixin:
         """
         if my_trim_flag is not None:
             # Import dynamically to avoid circular dependencies
-            import trimming_utils as tmu
+            import as_seg.model.trimming_utils as tmu
             annotations, predictions = tmu.apply_my_trim(
                 annotations, predictions, labels, len_signal, my_trim_flag
             )
