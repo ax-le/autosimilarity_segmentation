@@ -16,6 +16,13 @@ import scipy
 import librosa
 import math
 
+## Best practice, but requires torch install, so disabled by default.
+## Uncomment if torch is installed on your machine.
+# import torch
+# default_device = "cuda" if torch.cuda.is_available() else "cpu"
+## By default, set the device to "cpu". NB: This will be way slower...
+default_device = "cpu"
+
 # %% Read and treat inputs
 def get_bars_from_audio_madmom(song_path):
     """
@@ -82,7 +89,7 @@ def get_bars_from_audio_beat_this(song_path, checkpoint_path = "final0"):
     In Proceedings of the 25th International Society for Music Information Retrieval Conference (ISMIR).
     """
     from beat_this.inference import File2Beats
-    file2beats = File2Beats(checkpoint_path=checkpoint_path, device="cuda", dbn=False)
+    file2beats = File2Beats(checkpoint_path=checkpoint_path, device=default_device, dbn=False)
     beats, downbeats = file2beats(song_path)
     downbeats.append(beats[-1]) # Not sure of this one, but let's see
     return frontiers_to_segments(downbeats)
@@ -105,11 +112,30 @@ def get_beats_from_audio_madmom(song_path):
             
     return frontiers_to_segments(list(song_beats))
 
-def get_beats_from_audio_beat_this(song_path):
+def get_beats_from_audio_beat_this(song_path, checkpoint_path="final0"):
     """
+    Returns the beats of a song, directly from its audio signal.
+    Encapsulates the beat estimator from the beat_this toolbox [2].
 
+    Parameters
+    ----------
+    song_path : String
+        Path to the desired song.
+    checkpoint_path : String
+        Path to the desired checkpoint.
+
+    Returns
+    -------
+    beats_times : list of tuples of float
+        List of the estimated beats, as (start, end) times.
+    
+    References
+    ----------
+    [2] Foscarin, F., Schlüter, J., & Widmer, G. (2024). 
+    Beat this! Accurate beat tracking without DBN postprocessing. 
+    In Proceedings of the 25th International Society for Music Information Retrieval Conference (ISMIR).
     """
-    file2beats = File2Beats(checkpoint_path="/Brain/public/models/beat_this/beat_this-final0.ckpt", device="cuda", dbn=False)
+    file2beats = File2Beats(checkpoint_path=checkpoint_path, device=default_device, dbn=False)
     beats, downbeats = file2beats(song_path)
     return frontiers_to_segments(beats)
 
